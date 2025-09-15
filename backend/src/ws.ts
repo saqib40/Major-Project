@@ -1,11 +1,16 @@
 import { Server, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
-import { fetchS3Folder, saveToS3 } from "./aws";
+import { fetchS3Folder, saveToS3 } from "./aws.js";
 import path from "path";
-import { fetchDir, fetchFileContent, saveFile } from "./fs";
-import { TerminalManager } from "./pty";
+import { fetchDir, fetchFileContent, saveFile } from "./fs.js";
+import { TerminalManager } from "./pty.js";
+import { fileURLToPath } from "url";
 
 const terminalManager = new TerminalManager();
+
+// Recreate __dirname for ES Module environment
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function initWs(httpServer: HttpServer) {
     const io = new Server(httpServer, {

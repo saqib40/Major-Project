@@ -1,7 +1,10 @@
 // Import the S3 client constructor from the AWS SDK.
 // This allows us to create an S3 client instance to interact with S3-compatible services.
-import { S3 } from "aws-sdk";
-import { writeFile } from "./fs";
+// better to use => import { S3Client } from "@aws-sdk/client-s3"; v3 of sdk
+import AWS from "aws-sdk";
+const { S3 } = AWS;
+import { writeFile } from "./fs.js";
+
 
 // Create a new S3 client instance. This object will be used to make all our API calls to S3.
 const s3 = new S3({
@@ -50,13 +53,14 @@ export const fetchS3Folder = async (key: string, localPath: string): Promise<voi
                     
                     // The file content is in the 'Body' property of the response.
                     if (data.Body) {
-                        const fileData = data.Body;
+                        //const fileData = data.Body;
+                        const fileContentAsBuffer = Buffer.from(data.Body as string | Buffer);
                         // Construct the local file path. We remove the initial prefix to get the relative path.
                         // e.g., "code/project123/index.js" becomes "/index.js".
                         const filePath = `${localPath}/${fileKey.replace(key, "")}`;
                         
                         // Use our local helper function to write the downloaded content to a file.
-                        await writeFile(filePath, fileData);
+                        await writeFile(filePath, fileContentAsBuffer);
 
                         console.log(`Downloaded ${fileKey} to ${filePath}`);
                     }

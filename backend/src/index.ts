@@ -2,8 +2,8 @@ import dotenv from "dotenv"
 dotenv.config()
 import express from "express";
 import { createServer } from "http";
-import { initWs } from "./ws";
-import { initHttp } from "./http";
+import { initWs } from "./ws.js";
+import { initHttp } from "./http.js";
 import cors from "cors";
 
 const app = express();

@@ -1,5 +1,5 @@
 import { Express } from "express";
-import { copyS3Folder } from "./aws";
+import { copyS3Folder } from "./aws.js";
 import express from "express";
 
 export function initHttp(app: Express) {

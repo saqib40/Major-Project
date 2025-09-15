@@ -1,6 +1,11 @@
 //@ts-ignore => someone fix this
 import { fork, IPty } from 'node-pty';
 import path from "path";
+import { fileURLToPath } from "url";
+
+// Recreate __dirname for ES Module environment
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const SHELL = "bash";
 
