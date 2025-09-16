@@ -1,3 +1,5 @@
+// backend/src/pty.ts
+
 //@ts-ignore => someone fix this
 import { fork, IPty } from 'node-pty';
 import path from "path";
@@ -22,16 +24,19 @@ export class TerminalManager {
             name: 'xterm',
             cwd: path.join(__dirname, `../tmp/${replId}`)
         });
-        // output listener, and pid is Process ID
-        term.on('data', (data: string) => onData(data, term.pid));
+        
+        term.onData((data: string) => onData(data, term.pid)); // The 'data' event was deprecated
 
         this.sessions[id] = {
             terminal: term,
             replId
         };
+
+        // FIXED: The session is stored by the socket `id`, so we must use `id` to delete it.
         term.on('exit', () => {
-            delete this.sessions[term.pid];
+            delete this.sessions[id];
         });
+
         return term;
     }
 
@@ -40,9 +45,7 @@ export class TerminalManager {
     }
 
     clear(terminalId: string) {
-        // kill the process
-        this.sessions[terminalId].terminal.kill();
-        // remove session entry from map
+        this.sessions[terminalId]?.terminal.kill();
         delete this.sessions[terminalId];
     }
 }

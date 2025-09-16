@@ -30,7 +30,7 @@ export const Editor = ({
   }, [selectedFile])
 
   return (
-    <div>
+    <div style={{ width: "100%", display: "flex" }}>
       <Main>
         <Sidebar>
           <FileTree
@@ -47,4 +47,5 @@ export const Editor = ({
 
 const Main = styled.main`
   display: flex;
+  width: 100%; /* This was the missing piece */
 `;

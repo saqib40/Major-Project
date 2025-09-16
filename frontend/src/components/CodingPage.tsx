@@ -12,30 +12,64 @@ import { EXECUTION_ENGINE_URI } from '../config';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: 100vw; /* Take full viewport width */
+  height: 100vh; /* Take full viewport height */
+  margin: 0;
 `;
 
-const ButtonContainer = styled.div`
+const Header = styled.div`
   display: flex;
-  justify-content: flex-end; /* Aligns children (button) to the right */
-  padding: 10px; /* Adds some space around the button */
+  justify-content: flex-end;
+  padding: 8px 16px;
+  background-color: var(--panel-background);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0; /* Prevent header from shrinking */
+`;
+
+const StyledButton = styled.button`
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: var(--button-text-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #4091e3;
+  }
 `;
 
 const Workspace = styled.div`
   display: flex;
-  margin: 0;
-  font-size: 16px;
-  width: 100%;
+  flex-grow: 1;
+  overflow: hidden;
 `;
 
 const LeftPanel = styled.div`
-  flex: 1;
-  width: 60%;
+  flex: 3; /* Give more space to the editor */
+  min-width: 0; /* Allow the panel to shrink if needed */
+  display: flex; /* Make it a flex container for its children */
 `;
 
 const RightPanel = styled.div`
-  flex: 1;
-  width: 40%;
+  flex: 2; /* Give less space to the output/terminal */
+  min-width: 0; /* Allow the panel to shrink */
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-color);
+`;
+
+const LoadingContainer = styled.div`
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
 `;
 
 function useSocket(replId: string) {
@@ -76,12 +110,12 @@ export const CodingPage = () => {
             socket?.emit("fetchDir", file.path, (data: RemoteFile[]) => {
                 setFileStructure(prev => {
                     const allFiles = [...prev, ...data];
-                    return allFiles.filter((file, index, self) => 
+                    // Simple deduplication based on path
+                    return allFiles.filter((file, index, self) =>
                         index === self.findIndex(f => f.path === file.path)
                     );
                 });
             });
-
         } else {
             socket?.emit("fetchContent", { path: file.path }, (data: string) => {
                 file.content = data;
@@ -89,23 +123,25 @@ export const CodingPage = () => {
             });
         }
     };
-    
+
     if (!loaded) {
-        return "Loading...";
+        return <LoadingContainer>Loading Environment...</LoadingContainer>;
     }
 
     return (
         <Container>
-             <ButtonContainer>
-                <button onClick={() => setShowOutput(!showOutput)}>See output</button>
-            </ButtonContainer>
+             <Header>
+                <StyledButton onClick={() => setShowOutput(!showOutput)}>
+                    {showOutput ? "Hide Output" : "Show Output"}
+                </StyledButton>
+            </Header>
             <Workspace>
                 <LeftPanel>
-                    <Editor socket={socket} selectedFile={selectedFile} onSelect={onSelect} files={fileStructure} />
+                    <Editor socket={socket!} selectedFile={selectedFile} onSelect={onSelect} files={fileStructure} />
                 </LeftPanel>
                 <RightPanel>
                     {showOutput && <Output />}
-                    <Terminal socket={socket} />
+                    <Terminal socket={socket!} />
                 </RightPanel>
             </Workspace>
         </Container>

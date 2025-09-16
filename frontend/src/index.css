@@ -1,9 +1,37 @@
-body {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
+:root {
+  --font-family: 'Fira Code', monospace;
+  --background-color: #0d1117; /* GitHub dark mode background */
+  --text-color: #c9d1d9; /* Lighter text for dark background */
+  --primary-color: #58a6ff; /* A nice blue for primary actions */
+  --border-color: #30363d; /* Subtle border color */
+  --panel-background: #161b22; /* Background for panels and sidebars */
+  --hover-background: #1f6feb; /* Blue hover for interactive elements */
+  --button-text-color: #ffffff;
+}
 
-  background-color: #151515;
-  color: white;
-  zoom: 1;
+body {
+  font-family: var(--font-family);
+  font-size: 14px;
+  background-color: var(--background-color);
+  color: var(--text-color);
   margin: 0;
+  overflow: hidden; /* Prevent scrolling on the main page */
+}
+
+/* Basic scrollbar styling for a more integrated look */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--panel-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
 }
