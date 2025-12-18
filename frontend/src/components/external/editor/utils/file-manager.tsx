@@ -1,8 +1,10 @@
-export enum Type {
-  FILE,
-  DIRECTORY,
-  DUMMY
-}
+export const Type = {
+  FILE: 0,
+  DIRECTORY: 1,
+  DUMMY: 2
+} as const;
+
+export type Type = typeof Type[keyof typeof Type];
 
 interface CommonProps {
   id: string; // 文件id
@@ -15,7 +17,7 @@ interface CommonProps {
 }
 
 export interface File extends CommonProps {
-  
+
 }
 
 export interface RemoteFile {
@@ -76,7 +78,7 @@ export function buildFileTree(data: RemoteFile[]): Directory {
     cache.set(file.id, file);
   });
   // 开始遍历构建文件树
-  cache.forEach((value, key) => {
+  cache.forEach((value) => {
     // '0'表示文件或目录位于根目录
     if (value.parentId === "0") {
       if (value.type === Type.DIRECTORY) rootDir.dirs.push(value as Directory);

@@ -28,8 +28,6 @@ const TerminalBody = styled.div`
     padding: 5px;
 `;
 
-const fitAddon = new FitAddon();
-
 const OPTIONS_TERM = {
     cursorBlink: true,
     theme: {
@@ -46,11 +44,17 @@ export const TerminalComponent = ({ socket }: { socket: Socket | null }) => {
             return;
         }
 
+        const fitAddon = new FitAddon();
         // Create and open the terminal only once
         const term = new XtermTerminal(OPTIONS_TERM);
         term.loadAddon(fitAddon);
         term.open(terminalRef.current);
-        fitAddon.fit();
+
+        // Delay fit to ensure DOM is ready
+        setTimeout(() => {
+            fitAddon.fit();
+        }, 100);
+
         termRef.current = term; // Store instance
 
         socket.emit("requestTerminal");
@@ -63,7 +67,7 @@ export const TerminalComponent = ({ socket }: { socket: Socket | null }) => {
                 term.write(decodedData);
             }
         }
-        
+
         socket.on("terminal", terminalHandler);
 
         term.onData((data) => {

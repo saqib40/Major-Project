@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FaNodeJs, FaPython } from 'react-icons/fa';
+import { FaNodeJs, FaPython, FaJava } from 'react-icons/fa';
 
 /** Constants */
 const SLUG_WORDS = ["car", "dog", "computer", "person", "inside", "word", "for", "please", "to", "cool", "open", "source"];
@@ -107,48 +107,52 @@ const StyledButton = styled.button`
 
 /** Helper function */
 function getRandomSlug() {
-    let slug = "";
-    for (let i = 0; i < 3; i++) {
-        slug += SLUG_WORDS[Math.floor(Math.random() * SLUG_WORDS.length)];
-    }
-    return slug;
+  let slug = "";
+  for (let i = 0; i < 3; i++) {
+    slug += SLUG_WORDS[Math.floor(Math.random() * SLUG_WORDS.length)];
+  }
+  return slug;
 }
 
 /** Component */
 export const Landing = () => {
-    const [language, setLanguage] = useState("node-js");
-    const [replId, setReplId] = useState(getRandomSlug());
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+  const [language, setLanguage] = useState("node-js");
+  const [replId, setReplId] = useState(getRandomSlug());
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-    return (
-      <Container>
-        <Card>
-          <Title>Lepl lit</Title>
-          <StyledInput
-            onChange={(e) => setReplId(e.target.value)}
-            type="text"
-            placeholder="Repl ID"
-            value={replId}
-          />
-          <LanguageSelector>
-            <LanguageOption selected={language === "node-js"} onClick={() => setLanguage("node-js")}>
-              <FaNodeJs color="#68a063" />
-              <span>Node.js</span>
-            </LanguageOption>
-            <LanguageOption selected={language === "python"} onClick={() => setLanguage("python")}>
-              <FaPython color="#3776ab" />
-              <span>Python</span>
-            </LanguageOption>
-          </LanguageSelector>
+  return (
+    <Container>
+      <Card>
+        <Title>Lepl lit</Title>
+        <StyledInput
+          onChange={(e) => setReplId(e.target.value)}
+          type="text"
+          placeholder="Repl ID"
+          value={replId}
+        />
+        <LanguageSelector>
+          <LanguageOption selected={language === "node-js"} onClick={() => setLanguage("node-js")}>
+            <FaNodeJs color="#68a063" />
+            <span>Node.js</span>
+          </LanguageOption>
+          <LanguageOption selected={language === "python"} onClick={() => setLanguage("python")}>
+            <FaPython color="#3776ab" />
+            <span>Python</span>
+          </LanguageOption>
+          <LanguageOption selected={language === "java"} onClick={() => setLanguage("java")}>
+            <FaJava color="#f89820" />
+            <span>Java</span>
+          </LanguageOption>
+        </LanguageSelector>
 
-          <StyledButton disabled={loading} onClick={async () => {
-            setLoading(true);
-            await axios.post(`${SERVICE_URL}/project`, { replId, language });
-            setLoading(false);
-            navigate(`/coding/?replId=${replId}`)
-          }}>{loading ? "Starting ..." : "Start Coding"}</StyledButton>
-        </Card>
-      </Container>
-    );
+        <StyledButton disabled={loading} onClick={async () => {
+          setLoading(true);
+          await axios.post(`${SERVICE_URL}/project`, { replId, language });
+          setLoading(false);
+          navigate(`/coding/?replId=${replId}`)
+        }}>{loading ? "Starting ..." : "Start Coding"}</StyledButton>
+      </Card>
+    </Container>
+  );
 }

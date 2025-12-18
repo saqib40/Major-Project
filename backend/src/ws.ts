@@ -1,10 +1,10 @@
 import { Server, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
-import { fetchS3Folder, saveToS3 } from "./aws.js";
 import path from "path";
-import { fetchDir, fetchFileContent, saveFile } from "./fs.js";
+import { fetchDir, fetchFileContent, saveFile, createFolder } from "./fs.js";
 import { TerminalManager } from "./pty.js";
 import { fileURLToPath } from "url";
+import chokidar from "chokidar";
 
 const terminalManager = new TerminalManager();
 
@@ -20,7 +20,7 @@ export function initWs(httpServer: HttpServer) {
             methods: ["GET", "POST"],
         },
     });
-      
+
     io.on("connection", async (socket) => {
         // Auth checks should happen here
         const replId = socket.handshake.query.roomId as string;
@@ -31,12 +31,57 @@ export function initWs(httpServer: HttpServer) {
             return;
         }
 
-        await fetchS3Folder(`code/${replId}`, path.join(__dirname, `../tmp/${replId}`));
+        const watchDir = path.join(__dirname, `../tmp/${replId}`);
+        const watcher = chokidar.watch(watchDir, {
+            ignored: /(^|[\/\\])\../, // ignore dotfiles
+            persistent: true,
+            ignoreInitial: true // Don't emit add events for existing files on startup
+        });
+
+        watcher.on('add', (filePath) => {
+            const relativePath = path.relative(watchDir, filePath);
+            if (relativePath.startsWith('.')) return;
+            socket.emit('file:refresh', {
+                type: 'add',
+                data: { type: 'file', path: `/${relativePath}`, name: path.basename(relativePath) }
+            });
+        });
+        watcher.on('addDir', (filePath) => {
+            const relativePath = path.relative(watchDir, filePath);
+            if (relativePath.startsWith('.')) return;
+            socket.emit('file:refresh', {
+                type: 'add',
+                data: { type: 'dir', path: `/${relativePath}`, name: path.basename(relativePath) }
+            });
+        });
+        watcher.on('unlink', (filePath) => {
+            const relativePath = path.relative(watchDir, filePath);
+            socket.emit('file:refresh', { type: 'unlink', path: `/${relativePath}` });
+        });
+        watcher.on('unlinkDir', (filePath) => {
+            const relativePath = path.relative(watchDir, filePath);
+            socket.emit('file:refresh', { type: 'unlink', path: `/${relativePath}` });
+        });
+
+        socket.on("createFile", async ({ path: filePath }: { path: string }) => {
+            const fullPath = path.join(watchDir, filePath);
+            await saveFile(fullPath, "");
+        });
+
+        socket.on("createFolder", async ({ path: folderPath }: { path: string }) => {
+            const fullPath = path.join(watchDir, folderPath);
+            await createFolder(fullPath);
+        });
+
         socket.emit("loaded", {
-            rootContent: await fetchDir(path.join(__dirname, `../tmp/${replId}`), "")
+            rootContent: await fetchDir(watchDir, "")
         });
 
         initHandlers(socket, replId);
+
+        socket.on("disconnect", () => {
+            watcher.close();
+        });
     });
 }
 
@@ -62,20 +107,20 @@ function initHandlers(socket: Socket, replId: string) {
     // TODO: contents should be diff, not full file
     // Should be validated for size
     // Should be throttled before updating S3 (or use an S3 mount)
+    // S3 removed, now just local file
     socket.on("updateContent", async ({ path: filePath, content }: { path: string, content: string }) => {
         const fullPath = path.join(__dirname, `../tmp/${replId}/${filePath}`);
         await saveFile(fullPath, content);
-        await saveToS3(`code/${replId}`, filePath, content);
     });
 
     socket.on("requestTerminal", async () => {
         terminalManager.createPty(socket.id, replId, (data, id) => {
             socket.emit('terminal', {
-                data: Buffer.from(data,"utf-8")
+                data: Buffer.from(data, "utf-8")
             });
         });
     });
-    
+
     socket.on("terminalData", async ({ data }: { data: string, terminalId: number }) => {
         terminalManager.write(socket.id, data);
     });

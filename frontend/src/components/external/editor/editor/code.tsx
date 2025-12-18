@@ -13,30 +13,28 @@ export const Code = ({ selectedFile, socket }: { selectedFile: File | undefined,
     language = "javascript";
   else if (language === "ts" || language === "tsx")
     language = "typescript"
-  else if (language === "py" )
+  else if (language === "py")
     language = "python"
 
-    function debounce(func: (value: string) => void, wait: number) {
-      let timeout: number;
-      return (value: string) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          func(value);
-        }, wait);
-      };
-    }
+  function debounce(func: (value: string | undefined) => void, wait: number) {
+    let timeout: number;
+    return (value: string | undefined) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        func(value);
+      }, wait);
+    };
+  }
 
   return (
-      <Editor
-        height="100%"
-        language={language}
-        value={code}
-        theme="vs-dark"
-        onChange={debounce((value) => {
-          // Should send diffs, for now sending the whole file
-          // PR and win a bounty!
-          socket.emit("updateContent", { path: selectedFile.path, content: value });
-        }, 500)}
-      />
+    <Editor
+      height="100%"
+      language={language}
+      value={code}
+      theme="vs-dark"
+      onChange={debounce((value) => {
+        socket.emit("updateContent", { path: selectedFile.path, content: value });
+      }, 500)}
+    />
   )
 }

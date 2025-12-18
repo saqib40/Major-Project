@@ -98,15 +98,28 @@ export const CodingPage = () => {
 
     useEffect(() => {
         if (socket) {
-            socket.on('loaded', ({ rootContent }: { rootContent: RemoteFile[]}) => {
+            socket.on('loaded', ({ rootContent }: { rootContent: RemoteFile[] }) => {
                 setLoaded(true);
                 setFileStructure(rootContent);
+            });
+            socket.on('file:refresh', (event: { type: 'add' | 'unlink', data?: RemoteFile, path?: string }) => {
+                setFileStructure(prev => {
+                    if (event.type === 'add' && event.data) {
+                        // Avoid duplicates
+                        if (prev.some(f => f.path === event.data?.path)) return prev;
+                        return [...prev, event.data];
+                    } else if (event.type === 'unlink' && event.path) {
+                        return prev.filter(f => f.path !== event.path);
+                    }
+                    return prev;
+                });
             });
         }
     }, [socket]);
 
     const onSelect = (file: File) => {
         if (file.type === Type.DIRECTORY) {
+            setSelectedFile(file);
             socket?.emit("fetchDir", file.path, (data: RemoteFile[]) => {
                 setFileStructure(prev => {
                     const allFiles = [...prev, ...data];
@@ -124,20 +137,39 @@ export const CodingPage = () => {
         }
     };
 
+    const handleCreateFile = (fileName?: string) => {
+        if (fileName) {
+            socket?.emit("createFile", { path: fileName });
+        }
+    };
+
+    const handleCreateFolder = (folderName?: string) => {
+        if (folderName) {
+            socket?.emit("createFolder", { path: folderName });
+        }
+    };
+
     if (!loaded) {
         return <LoadingContainer>Loading Environment...</LoadingContainer>;
     }
 
     return (
         <Container>
-             <Header>
+            <Header>
                 <StyledButton onClick={() => setShowOutput(!showOutput)}>
                     {showOutput ? "Hide Output" : "Show Output"}
                 </StyledButton>
             </Header>
             <Workspace>
                 <LeftPanel>
-                    <Editor socket={socket!} selectedFile={selectedFile} onSelect={onSelect} files={fileStructure} />
+                    <Editor
+                        socket={socket!}
+                        selectedFile={selectedFile}
+                        onSelect={onSelect}
+                        files={fileStructure}
+                        onCreateFile={handleCreateFile}
+                        onCreateFolder={handleCreateFolder}
+                    />
                 </LeftPanel>
                 <RightPanel>
                     {showOutput && <Output />}
